@@ -1,0 +1,11 @@
+Model Information:
+* title:	Marshmallow
+* source:	https://sketchfab.com/3d-models/marshmallow-092f14de973c4e10a451b236aea33e83
+* author:	Urijah653748 (https://sketchfab.com/ujceba0102)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Marshmallow" (https://sketchfab.com/3d-models/marshmallow-092f14de973c4e10a451b236aea33e83) by Urijah653748 (https://sketchfab.com/ujceba0102) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

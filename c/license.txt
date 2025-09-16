@@ -1,0 +1,11 @@
+Model Information:
+* title:	Candy Cane Prop
+* source:	https://sketchfab.com/3d-models/candy-cane-prop-94ed48b0bc2d4646a63774c1cf0abc7f
+* author:	BojackArt (https://sketchfab.com/bojackart)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Candy Cane Prop" (https://sketchfab.com/3d-models/candy-cane-prop-94ed48b0bc2d4646a63774c1cf0abc7f) by BojackArt (https://sketchfab.com/bojackart) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

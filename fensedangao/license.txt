@@ -1,0 +1,11 @@
+Model Information:
+* title:	Plastic Cupcake
+* source:	https://sketchfab.com/3d-models/plastic-cupcake-69f4c562506c4c8dbf2940ad3f5d3ed1
+* author:	Siesta (https://sketchfab.com/siesta)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Plastic Cupcake" (https://sketchfab.com/3d-models/plastic-cupcake-69f4c562506c4c8dbf2940ad3f5d3ed1) by Siesta (https://sketchfab.com/siesta) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

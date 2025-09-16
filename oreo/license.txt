@@ -1,0 +1,11 @@
+Model Information:
+* title:	Oreo Cookie
+* source:	https://sketchfab.com/3d-models/oreo-cookie-56fc6fbe8a604d3b9c63a78b3c810840
+* author:	Dhani1 (https://sketchfab.com/Dhani1)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Oreo Cookie" (https://sketchfab.com/3d-models/oreo-cookie-56fc6fbe8a604d3b9c63a78b3c810840) by Dhani1 (https://sketchfab.com/Dhani1) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

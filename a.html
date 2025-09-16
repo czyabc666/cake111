@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Cake模型查看器（最终版）</title>
+    <style>
+        /* 初始覆盖层样式 */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #ffecef 0%, #fff9e6 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.8s;
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 重启覆盖层 */
+        #restart-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #ffecef 0%, #fff9e6 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9998;
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.8s;
+            visibility: hidden;
+            opacity: 0;
+        }
+
+        /* 艺术发光标题样式 - 调整为更可爱圆润的字体，增大字号并添加浅粉色描边 */
+        #fantasy-title {
+            font-size: 8rem; /* 增大字号 */
+            font-weight: 700; /* 稍微减轻字重，更显圆润可爱 */
+            font-family: 'Comic Sans MS', 'Bubblegum Sans', cursive; /* 可爱圆润的字体 */
+            text-transform: uppercase;
+            letter-spacing: -3px;
+            margin-bottom: 2rem;
+            background: linear-gradient(90deg, #ff6b9e, #ffc145);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 
+                0 0 12px rgba(255, 107, 158, 0.8),
+                0 0 24px rgba(255, 107, 158, 0.6),
+                0 0 36px rgba(255, 193, 69, 0.6),
+                0 0 48px rgba(255, 193, 69, 0.4),
+                0 2px 8px rgba(0, 0, 0, 0.2),
+                -1px -1px 0 #ffcce5,  /* 浅粉色描边 */
+                1px -1px 0 #ffcce5,
+                -1px 1px 0 #ffcce5,
+                1px 1px 0 #ffcce5;
+            animation: titlePulse 3s infinite alternate;
+        }
+
+        @keyframes titlePulse {
+            0% {
+                text-shadow: 
+                    0 0 10px rgba(255, 107, 158, 0.7),
+                    0 0 20px rgba(255, 107, 158, 0.5),
+                    0 0 30px rgba(255, 193, 69, 0.5),
+                    0 0 40px rgba(255, 193, 69, 0.3),
+                    -1px -1px 0 #ffcce5,
+                    1px -1px 0 #ffcce5,
+                    -1px 1px 0 #ffcce5,
+                    1px 1px 0 #ffcce5;
+                transform: scale(0.95);
+            }
+            100% {
+                text-shadow: 
+                    0 0 18px rgba(255, 107, 158, 0.9),
+                    0 0 36px rgba(255, 107, 158, 0.7),
+                    0 0 54px rgba(255, 193, 69, 0.7),
+                    0 0 72px rgba(255, 193, 69, 0.5),
+                    -1px -1px 0 #ffcce5,
+                    1px -1px 0 #ffcce5,
+                    -1px 1px 0 #ffcce5,
+                    1px 1px 0 #ffcce5;
+                transform: scale(1.05);
+            }
+        }
+
+        /* Start按钮样式 - 增大为原来的两倍 */
+        #start-btn {
+            padding: 2rem 6rem; /* 原尺寸的两倍 */
+            font-size: 2.4rem; /* 原尺寸的两倍 */
+            font-weight: 600;
+            font-family: 'Arial', sans-serif;
+            background-color: #ff6b9e;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 
+                0 8px 30px rgba(255, 107, 158, 0.4), /* 阴影也相应放大 */
+                inset 0 -4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        /* Restart按钮样式 */
+        #restart-btn {
+            padding: 1.2rem 3.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Arial', sans-serif;
+            background-color: #ff6b9e;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 
+                0 6px 20px rgba(255, 107, 158, 0.5),
+                inset 0 -3px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            outline: none;
+            transform: scale(1);
+            animation: buttonPulse 2s infinite alternate;
+        }
+
+        @keyframes buttonPulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 
+                    0 6px 20px rgba(255, 107, 158, 0.5),
+                    inset 0 -3px 5px rgba(0, 0, 0, 0.2);
+            }
+            100% {
+                transform: scale(1.05);
+                box-shadow: 
+                    0 8px 25px rgba(255, 107, 158, 0.7),
+                    inset 0 -3px 5px rgba(0, 0, 0, 0.2);
+            }
+        }
+
+        #start-btn:hover, #restart-btn:hover {
+            background-color: #ff528f;
+            transform: translateY(-3px);
+            box-shadow: 
+                0 6px 20px rgba(255, 107, 158, 0.6),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        #start-btn:active, #restart-btn:active {
+            transform: translateY(-1px);
+            box-shadow: 
+                0 2px 10px rgba(255, 107, 158, 0.5),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 覆盖层隐藏状态 */
+        #overlay.hidden, #restart-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* 覆盖层显示状态 */
+        #restart-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        /* 原有样式保持不变 */
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: linear-gradient(180deg, #ffd6e0 0%, #e0f7ff 100%); 
+        }
+        #container { width: 100%; height: 100vh; }
+        #loading { 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            text-align: center; 
+            background: rgba(255,255,255,0.8);
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        #progress { width: 300px; height: 20px; border: 1px solid #ddd; margin: 10px 0; border-radius: 10px; overflow: hidden; }
+        #progress-bar { height: 100%; background: linear-gradient(90deg, #ff69b4, #4fc3f7); width: 0%; }
+        #status { color: #333; font-size: 14px; }
+        .tooltip {
+            position: fixed;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .dragging提示 {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        #excellent-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 6rem;
+            font-weight: 900;
+            font-family: 'Arial Black', Impact, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            background: linear-gradient(135deg, #9370db 0%, #4fc3f7 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 
+                0 0 10px rgba(147, 112, 219, 0.7),
+                0 0 20px rgba(147, 112, 219, 0.5),
+                0 0 30px rgba(79, 195, 247, 0.5),
+                0 0 40px rgba(79, 195, 247, 0.3),
+                0 2px 5px rgba(0, 0, 0, 0.2);
+            transform: translate(-50%, -50%) rotate(-2deg) scale(0.9);
+            pointer-events: none;
+            z-index: 1000;
+            animation: pulse 2s infinite alternate;
+        }
+        @keyframes pulse {
+            0% {
+                text-shadow: 
+                    0 0 10px rgba(147, 112, 219, 0.7),
+                    0 0 20px rgba(147, 112, 219, 0.5),
+                    0 0 30px rgba(79, 195, 247, 0.5),
+                    0 0 40px rgba(79, 195, 247, 0.3);
+                transform: translate(-50%, -50%) rotate(-2deg) scale(0.9);
+            }
+            100% {
+                text-shadow: 
+                    0 0 15px rgba(147, 112, 219, 0.9),
+                    0 0 30px rgba(147, 112, 219, 0.7),
+                    0 0 45px rgba(79, 195, 247, 0.7),
+                    0 0 60px rgba(79, 195, 247, 0.5);
+                transform: translate(-50%, -50%) rotate(-2deg) scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 初始覆盖层 -->
+    <div id="overlay">
+        <h1 id="fantasy-title">Fantasy Cake</h1>
+        <button id="start-btn">Start</button>
+    </div>
+
+    <!-- 重启覆盖层 -->
+    <div id="restart-overlay">
+        <button id="restart-btn">Restart</button>
+    </div>
+
+    <!-- 3D内容容器 -->
+    <div id="container"></div>
+    <div id="loading">
+        <h3 style="color: #333; margin-top: 0;">加载中...</h3>
+        <div id="progress"><div id="progress-bar"></div></div>
+        <div id="status">小蛋糕准备中...</div>
+    </div>
+    <div class="tooltip"></div>
+    <div class="dragging提示">拖动装饰物来装饰你的小蛋糕吧~</div>
+    <div id="excellent-text">excellent！</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/DRACOLoader.js"></script>
+    
+    <script>
+        // 全局变量
+        let scene, camera, renderer, controls;
+        let threeJsInitialized = false;
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const overlay = document.getElementById('overlay');
+            const startBtn = document.getElementById('start-btn');
+            const restartOverlay = document.getElementById('restart-overlay');
+            const restartBtn = document.getElementById('restart-btn');
+            
+            // 点击Start按钮，隐藏初始覆盖层并初始化3D页面
+            startBtn.addEventListener('click', function() {
+                overlay.classList.add('hidden');
+                // 延迟初始化3D内容，确保覆盖层过渡流畅
+                setTimeout(init3DCakeViewer, 800);
+            });
+            
+            // 点击Restart按钮，恢复到初始状态
+            restartBtn.addEventListener('click', function() {
+                // 隐藏重启覆盖层
+                restartOverlay.classList.remove('visible');
+                restartOverlay.classList.add('hidden');
+                
+                // 完全重置页面到初始状态
+                fullResetToInitialState();
+            });
+        });
+
+        // 完全重置到页面刚打开的状态
+        function fullResetToInitialState() {
+            // 清除所有Three.js实例
+            if (scene) {
+                while (scene.children.length > 0) {
+                    scene.remove(scene.children[0]);
+                }
+            }
+            
+            if (renderer && renderer.domElement && renderer.domElement.parentElement) {
+                renderer.domElement.parentElement.removeChild(renderer.domElement);
+            }
+            
+            // 重置所有变量
+            scene = null;
+            camera = null;
+            renderer = null;
+            controls = null;
+            threeJsInitialized = false;
+            
+            // 显示初始覆盖层
+            const overlay = document.getElementById('overlay');
+            overlay.classList.remove('hidden');
+            
+            // 重置加载状态
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('status').textContent = '准备加载模型';
+            
+            // 重置excellent文字
+            const excellentText = document.getElementById('excellent-text');
+            excellentText.style.opacity = 0;
+        }
+
+        // 初始化3D蛋糕查看器
+        function init3DCakeViewer() {
+            if (threeJsInitialized) return;
+            threeJsInitialized = true;
+            
+            // ------------------------------
+            // 所有模型坐标集中配置区
+            // ------------------------------
+            const MODEL_COORDINATES = {
+                cake: { 
+                    position: { x: 0, y: -2, z: 0 },
+                    scale: 5,
+                    visible: true
+                },
+                zisedangao: { 
+                    position: { x: 4, y: -2, z: -5 },
+                    scale: 1.5,
+                    visible: false
+                },
+                fensedangao: { 
+                    position: { x: 0, y: 5, z: 0 },
+                    scale: 10,
+                    visible: false
+                },
+                jianhao: { 
+                    position: { x: 13, y: -6, z: 4 },
+                    scale: 2,
+                    visible: true,
+                    rotation: { x: Math.PI / 3, y: 0, z: 0 },
+                    color: 0x87CEEB
+                },
+                o: { 
+                    position: { x: -18, y: -9, z: 5 },
+                    scale: 0.17,
+                    visible: true,
+                    color: 0xffff00,
+                    draggable: false,
+                    rotation: { x: Math.PI / 3, y: 0, z: 0 },
+                    linkToJianhao: true
+                },
+                caomei: { 
+                    position: { x: 8, y: -2, z: 6 },
+                    scale: 0.08,
+                    visible: false,
+                    initialPos: { x: 8, y: -2, z: 6 }
+                },
+                lanmei: { 
+                    position: { x: 3, y: -2, z: 6 },
+                    scale: 150,
+                    visible: false,
+                    initialPos: { x: 3, y: -2, z: 6 }
+                },
+                oreo: { 
+                    position: { x: -3, y: -1.5, z: 6 },
+                    scale: 0.3,
+                    visible: false,
+                    color: 0x8B4513,
+                    initialPos: { x: -3, y: -1.5, z: 6 }
+                },
+                yingtao: { 
+                    position: { x: -8, y: -2, z: 6 },
+                    scale: 0.8,
+                    visible: false,
+                    initialPos: { x: -8, y: -2, z: 6 }
+                },
+                a: { 
+                    position: { x: 5, y: -2, z: 9 },
+                    scale: 0.3,
+                    visible: false,
+                    initialPos: { x: 5, y: -2, z: 9 },
+                    rotation: { x: 0, y: 0, z: -Math.PI / 6 },
+                    alwaysDraggable: true
+                },
+                b: { 
+                    position: { x: 0, y: 0, z: 10 },
+                    scale: 1,
+                    visible: false,
+                    initialPos: { x: 0, y: 0, z: 10 },
+                    color: 0xffd1dc,
+                    alwaysDraggable: true
+                },
+                c: { 
+                    position: { x: -5, y: -1, z: 9 },
+                    scale: 0.01,
+                    visible: false,
+                    initialPos: { x: -5, y: -1, z: 9 },
+                    rotation: { x: 0, y: 0, z: Math.PI / 6 },
+                    alwaysDraggable: true
+                }
+            };
+            
+            const SPHERE_COORDINATES = [
+                { 
+                    position: { x: -6, y: -6, z: 5 },
+                    color: 0xffffe0, 
+                    size: 1.5, 
+                    type: 'showCake', 
+                    tooltip: '原味奶油蛋糕' 
+                },
+                { 
+                    position: { x: 0, y: -6, z: 5 },
+                    color: 0xffc0cb, 
+                    size: 1.5, 
+                    type: 'showFenSe', 
+                    tooltip: '草莓奶油蛋糕' 
+                },
+                { 
+                    position: { x: 5, y: -6, z: 5 },
+                    color: 0x9370db, 
+                    size: 1.5, 
+                    type: 'showZiSe', 
+                    tooltip: '蓝莓奶油蛋糕' 
+                }
+            ];
+
+            // ------------------------------
+            // 常量定义区
+            // ------------------------------
+            const DRAGGABLE_MODELS = ['caomei', 'lanmei', 'oreo', 'yingtao', 'a', 'b', 'c'];
+            const NEW_MODELS = ['a', 'b', 'c'];
+            const POSITION_TOLERANCE = 0.1;
+
+            // ------------------------------
+            // 局部变量区
+            // ------------------------------
+            const models = {};
+            const spheres = [];
+            let loaded = 0, total = Object.keys(MODEL_COORDINATES).length;
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            let tooltip;
+            let jianhaoClicked = false;
+            let jianhaoConfirmed = false;
+            let jianhaoFinalized = false;
+            let jianhaoPermanentlyHidden = false;
+            const clickableObjects = [];
+            let draggedObject = null;
+            const dragOffset = new THREE.Vector3();
+            let isDraggingModel = false;
+            let isRotatingView = false;
+            let excellentText;
+            let isCameraAnimating = false;
+            const restartOverlay = document.getElementById('restart-overlay');
+
+            // ------------------------------
+            // 初始化函数
+            // ------------------------------
+            function init() {
+                tooltip = document.querySelector('.tooltip');
+                excellentText = document.getElementById('excellent-text');
+                
+                // 初始化场景
+                scene = new THREE.Scene();
+                scene.background = null;
+                
+                // 初始化相机
+                camera = new THREE.PerspectiveCamera(
+                    75, 
+                    window.innerWidth / window.innerHeight, 
+                    0.1, 
+                    1000
+                );
+                camera.position.set(0, 15, 30);
+
+                // 初始化渲染器
+                renderer = new THREE.WebGLRenderer({ 
+                    antialias: true, 
+                    alpha: true 
+                });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                document.getElementById('container').appendChild(renderer.domElement);
+
+                // 光源设置
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+                scene.add(ambientLight);
+                
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                dirLight.position.set(10, 20, 15);
+                dirLight.castShadow = true;
+                dirLight.shadow.mapSize.width = 2048;
+                dirLight.shadow.mapSize.height = 2048;
+                dirLight.shadow.camera.near = 0.5;
+                dirLight.shadow.camera.far = 50;
+                scene.add(dirLight);
+
+                // 创建交互球体
+                createSpheres();
+
+                // 初始化控制器
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.target.set(0, 1, 0);
+                controls.maxDistance = 60;
+                controls.minDistance = 10;
+                controls.enableRotate = true;
+                controls.enableZoom = true;
+                controls.enablePan = false;
+
+                // 初始化加载器
+                const dracoLoader = new THREE.DRACOLoader();
+                dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+                const loader = new THREE.GLTFLoader();
+                loader.setDRACOLoader(dracoLoader);
+                
+                // 加载所有模型
+                loadAllModels(loader);
+
+                // 事件监听
+                window.addEventListener('resize', onResize);
+                window.addEventListener('mousedown', onMouseDown, false);
+                window.addEventListener('mousemove', onMouseMove, false);
+                window.addEventListener('mouseup', onMouseUp, false);
+                window.addEventListener('mouseleave', onMouseUp, false);
+                
+                // 启动动画
+                animate();
+            }
+
+            // 相机动画函数
+            function animateCamera(targetPosition, duration, onComplete) {
+                const startPosition = new THREE.Vector3().copy(camera.position);
+                const startTime = performance.now();
+                isCameraAnimating = true;
+                controls.enabled = false;
+                
+                function update(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const easeProgress = progress * (2 - progress);
+                    
+                    camera.position.lerpVectors(startPosition, targetPosition, easeProgress);
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(update);
+                    } else {
+                        isCameraAnimating = false;
+                        controls.enabled = true;
+                        if (onComplete) onComplete();
+                    }
+                }
+                
+                requestAnimationFrame(update);
+            }
+
+            // 显示excellent文字
+            function showExcellent() {
+                if (models.jianhao && models.jianhao.obj) {
+                    models.jianhao.obj.visible = false;
+                    jianhaoPermanentlyHidden = true;
+                }
+                
+                if (models.o && models.o.obj) {
+                    models.o.obj.visible = false;
+                }
+                
+                const targetCameraPosition = new THREE.Vector3(0, 15, 15);
+                animateCamera(targetCameraPosition, 1500, () => {
+                    excellentText.style.opacity = 0;
+                    excellentText.style.transform = 'translate(-50%, -50%) rotate(-2deg) scale(0.7)';
+                    
+                    void excellentText.offsetWidth;
+                    
+                    excellentText.style.opacity = 1;
+                    excellentText.style.transform = 'translate(-50%, -50%) rotate(-2deg) scale(1)';
+                    
+                    // excellent消失后2秒显示重启覆盖层
+                    setTimeout(() => {
+                        excellentText.style.opacity = 0;
+                        excellentText.style.transform = 'translate(-50%, -50%) rotate(-2deg) scale(0.7)';
+                        
+                        // 2秒后显示重启覆盖层
+                        setTimeout(() => {
+                            restartOverlay.classList.remove('hidden');
+                            restartOverlay.classList.add('visible');
+                        }, 1000);
+                    }, 1000);
+                });
+            }
+
+            // ------------------------------
+            // 球体创建函数
+            // ------------------------------
+            function createSpheres() {
+                SPHERE_COORDINATES.forEach((sphereProps) => {
+                    const geometry = new THREE.SphereGeometry(sphereProps.size, 32, 32);
+                    const material = new THREE.MeshStandardMaterial({
+                        color: sphereProps.color,
+                        roughness: 0.8,
+                        metalness: 0.1
+                    });
+                    
+                    const sphereMesh = new THREE.Mesh(geometry, material);
+                    sphereMesh.position.set(
+                        sphereProps.position.x, 
+                        sphereProps.position.y, 
+                        sphereProps.position.z
+                    );
+                    
+                    sphereMesh.castShadow = true;
+                    sphereMesh.receiveShadow = true;
+                    sphereMesh.userData.type = sphereProps.type;
+                    sphereMesh.userData.isSphere = true;
+                    sphereMesh.userData.tooltip = sphereProps.tooltip;
+                    
+                    scene.add(sphereMesh);
+                    spheres.push({ mesh: sphereMesh, ...sphereProps });
+                    clickableObjects.push(sphereMesh);
+                });
+            }
+
+            // ------------------------------
+            // 模型加载函数
+            // ------------------------------
+            function loadAllModels(loader) {
+                Object.keys(MODEL_COORDINATES).forEach(key => {
+                    const coords = MODEL_COORDINATES[key];
+                    models[key] = { 
+                        obj: null, 
+                        loaded: false, 
+                        visible: coords.visible,
+                        initialPos: coords.initialPos || null,
+                        isConfirmed: false,
+                        isNewModel: NEW_MODELS.includes(key),
+                        draggable: coords.draggable || false,
+                        linkToJianhao: coords.linkToJianhao || false
+                    };
+                    
+                    loadModel(loader, key, `./${key}/scene.gltf`, 
+                        coords.position.x, coords.position.y, coords.position.z, 
+                        coords.scale, coords.visible, 
+                        coords.rotation || null, coords.color || null
+                    );
+                });
+            }
+
+            function getModelName(key) {
+                const nameMap = {
+                    cake: '原味蛋糕',
+                    zisedangao: '紫色蛋糕',
+                    fensedangao: '粉色蛋糕',
+                    jianhao: '加号控件',
+                    o: '模型O',
+                    caomei: '草莓',
+                    lanmei: '蓝莓',
+                    oreo: '奥利奥',
+                    yingtao: '樱桃',
+                    a: '模型A',
+                    b: '模型B',
+                    c: '模型C'
+                };
+                return nameMap[key] || key;
+            }
+
+            function loadModel(loader, key, url, x, y, z, scale, visible, rotation, color) {
+                document.getElementById('status').textContent = `加载${getModelName(key)}模型...`;
+                
+                loader.load(
+                    url, 
+                    (gltf) => {
+                        const model = gltf.scene;
+                        model.position.set(x, y, z);
+                        model.scale.set(scale, scale, scale);
+                        model.visible = visible;
+                        
+                        if (rotation) {
+                            model.rotation.set(rotation.x, rotation.y, rotation.z);
+                        }
+                        
+                        const coords = MODEL_COORDINATES[key];
+                        model.userData = {
+                            type: key,
+                            draggable: coords.draggable || false,
+                            isFruit: DRAGGABLE_MODELS.includes(key) && !NEW_MODELS.includes(key),
+                            isNewModel: NEW_MODELS.includes(key),
+                            isJianhao: key === 'jianhao',
+                            isResetButton: key === 'o',
+                            initialPos: coords.initialPos || null,
+                            linkToJianhao: coords.linkToJianhao || false
+                        };
+                        
+                        if (coords.draggable || DRAGGABLE_MODELS.includes(key)) {
+                            clickableObjects.push(model);
+                            
+                            model.traverse(child => {
+                                if (child.isMesh) {
+                                    child.userData = {
+                                        draggable: coords.draggable || false,
+                                        parentModel: model,
+                                        type: key,
+                                        isFruit: DRAGGABLE_MODELS.includes(key) && !NEW_MODELS.includes(key),
+                                        isNewModel: NEW_MODELS.includes(key),
+                                        isResetButton: key === 'o'
+                                    };
+                                    clickableObjects.push(child);
+                                }
+                            });
+                        } else if (key === 'o') {
+                            clickableObjects.push(model);
+                            model.traverse(child => {
+                                if (child.isMesh) {
+                                    child.userData = {
+                                        parentModel: model,
+                                        type: key,
+                                        isResetButton: true
+                                    };
+                                    clickableObjects.push(child);
+                                }
+                            });
+                        }
+                        
+                        model.traverse(child => {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                                
+                                if (key === 'o') {
+                                    child.material = new THREE.MeshStandardMaterial({
+                                        color: color || 0xffff00,
+                                        roughness: 0.5,
+                                        metalness: 0.3,
+                                        emissive: color || 0xffff00,
+                                        emissiveIntensity: 0.2
+                                    });
+                                }
+                                else if (key === 'jianhao') {
+                                    child.material = new THREE.MeshStandardMaterial({
+                                        color: color || 0x87CEEB,
+                                        roughness: 0.7,
+                                        metalness: 0.2
+                                    });
+                                    child.userData.type = 'jianhao';
+                                    child.userData.isJianhao = true;
+                                    clickableObjects.push(child);
+                                } 
+                                else if (key === 'oreo') {
+                                    child.material = new THREE.MeshStandardMaterial({
+                                        color: color || 0x8B4513,
+                                        roughness: 0.7,
+                                        metalness: 0.2
+                                    });
+                                }
+                                else if (key === 'caomei') {
+                                    child.material = new THREE.MeshStandardMaterial({
+                                        color: 0xff3838,
+                                        roughness: 0.3,
+                                        metalness: 0.2,
+                                        emissive: 0x330000,
+                                        emissiveIntensity: 0.3
+                                    });
+                                }
+                                else if (key === 'lanmei') {
+                                    child.material = new THREE.MeshStandardMaterial({
+                                        color: 0x0a2463,
+                                        roughness: 0.3,
+                                        metalness: 0.2,
+                                        emissive: 0x000033,
+                                        emissiveIntensity: 0.3
+                                    });
+                                }
+                                else if (key === 'b') {
+                                    const lightPink = 0xffd1dc;
+                                    child.material = new THREE.MeshStandardMaterial({
+                                        color: lightPink,
+                                        roughness: 0.1,
+                                        metalness: 0.5,
+                                        emissive: lightPink,
+                                        emissiveIntensity: 0.6
+                                    });
+                                }
+                                else if (!child.material || !child.material.map) {
+                                    child.material = new THREE.MeshStandardMaterial({
+                                        color: 0xaaaaaa,
+                                        roughness: 0.7,
+                                        metalness: 0.2
+                                    });
+                                }
+                            }
+                        });
+                        
+                        scene.add(model);
+                        models[key].obj = model;
+                        models[key].loaded = true;
+
+                        loaded++;
+                        updateProgress(loaded / total);
+                        if (loaded === total) {
+                            document.getElementById('loading').style.display = 'none';
+                        }
+                    },
+                    (xhr) => {
+                        const pct = (xhr.loaded / xhr.total * 100).toFixed(0);
+                        document.getElementById('status').textContent = `${getModelName(key)}模型: ${pct}%`;
+                        updateProgress(xhr.loaded / xhr.total);
+                    },
+                    (err) => {
+                        console.error(`${getModelName(key)}模型加载失败:`, err);
+                        let geom, geomSize = 1;
+                        let geomColor = 0xaaaaaa;
+                        
+                        if (key === 'o') {
+                            geom = new THREE.SphereGeometry(geomSize, 32, 32);
+                            geomColor = 0xffff00;
+                        }
+                        else if (key === 'zisedangao') {
+                            geom = new THREE.BoxGeometry(3, 3, 3);
+                            geomColor = 0x9370db;
+                        } else if (key === 'fensedangao') {
+                            geom = new THREE.BoxGeometry(5, 5, 5);
+                            geomColor = 0xffc0cb;
+                        } else if (key === 'cake') {
+                            geom = new THREE.BoxGeometry(5, 5, 5);
+                            geomColor = 0xcccccc;
+                        } else if (key === 'jianhao') {
+                            geom = new THREE.BoxGeometry(2, 2, 2);
+                            geomColor = 0x87CEEB;
+                        } else if (key === 'caomei') {
+                            geom = new THREE.BoxGeometry(1, 1, 1);
+                            geomColor = 0xff3838;
+                        } else if (key === 'lanmei') {
+                            geom = new THREE.BoxGeometry(1, 1, 1);
+                            geomColor = 0x2a45ff;
+                        } else if (key === 'oreo') {
+                            geom = new THREE.BoxGeometry(1 * 0.3, 1 * 0.3, 1 * 0.3);
+                            geomColor = 0x8B4513;
+                        } else if (key === 'yingtao') {
+                            geom = new THREE.BoxGeometry(1, 1, 1);
+                            geomColor = 0xff6347;
+                        } else if (key === 'a') {
+                            geom = new THREE.BoxGeometry(1, 1, 1);
+                            geomColor = 0xff9900;
+                        } else if (key === 'b') {
+                            geom = new THREE.BoxGeometry(1, 1, 1);
+                            geomColor = 0xffd1dc;
+                        } else if (key === 'c') {
+                            geom = new THREE.BoxGeometry(1, 1, 1);
+                            geomColor = 0xff33cc;
+                        }
+                        else {
+                            geom = new THREE.BoxGeometry(geomSize, geomSize, geomSize);
+                        }
+                        
+                        const mat = new THREE.MeshBasicMaterial({ 
+                            color: geomColor, 
+                            wireframe: true,
+                            transparent: true,
+                            opacity: 0.8
+                        });
+                        const model = new THREE.Mesh(geom, mat);
+                        
+                        model.userData = {
+                            type: key,
+                            draggable: MODEL_COORDINATES[key].draggable || false,
+                            isFruit: DRAGGABLE_MODELS.includes(key) && !NEW_MODELS.includes(key),
+                            isNewModel: NEW_MODELS.includes(key),
+                            isJianhao: key === 'jianhao',
+                            isResetButton: key === 'o',
+                            initialPos: MODEL_COORDINATES[key].initialPos || null,
+                            linkToJianhao: MODEL_COORDINATES[key].linkToJianhao || false
+                        };
+                        
+                        if (rotation) {
+                            model.rotation.set(rotation.x, rotation.y, rotation.z);
+                        }
+                        
+                        if (MODEL_COORDINATES[key].draggable || DRAGGABLE_MODELS.includes(key)) {
+                            clickableObjects.push(model);
+                            model.traverse(child => {
+                                if (child.isMesh) {
+                                    child.userData = {
+                                        draggable: MODEL_COORDINATES[key].draggable || false,
+                                        parentModel: model,
+                                        type: key,
+                                        isFruit: DRAGGABLE_MODELS.includes(key) && !NEW_MODELS.includes(key),
+                                        isNewModel: NEW_MODELS.includes(key)
+                                    };
+                                    clickableObjects.push(child);
+                                }
+                            });
+                        } else if (key === 'o') {
+                            clickableObjects.push(model);
+                            model.traverse(child => {
+                                if (child.isMesh) {
+                                    child.userData = {
+                                        parentModel: model,
+                                        type: key,
+                                        isResetButton: true
+                                    };
+                                    clickableObjects.push(child);
+                                }
+                            });
+                        }
+                        
+                        if (key === 'jianhao') {
+                            clickableObjects.push(model);
+                            model.traverse(child => {
+                                if (child.isMesh) {
+                                    child.userData.isJianhao = true;
+                                    clickableObjects.push(child);
+                                }
+                            });
+                        }
+                        
+                        model.position.set(x, y, z);
+                        model.scale.set(scale, scale, scale);
+                        model.visible = visible;
+                        scene.add(model);
+                        
+                        models[key].obj = model;
+                        models[key].loaded = true;
+                        loaded++;
+                        updateProgress(loaded / total);
+                        
+                        if (loaded === total) {
+                            document.getElementById('loading').style.display = 'none';
+                        }
+                    }
+                );
+            }
+
+            // ------------------------------
+            // 辅助函数
+            // ------------------------------
+            function isAtInitialPosition(modelKey) {
+                const model = models[modelKey];
+                if (!model || !model.obj || !model.initialPos) return false;
+                
+                const currentPos = model.obj.position;
+                const initialPos = model.initialPos;
+                
+                const xMatch = Math.abs(currentPos.x - initialPos.x) <= POSITION_TOLERANCE;
+                const yMatch = Math.abs(currentPos.y - initialPos.y) <= POSITION_TOLERANCE;
+                const zMatch = Math.abs(currentPos.z - initialPos.z) <= POSITION_TOLERANCE;
+                
+                return xMatch && yMatch && zMatch;
+            }
+
+            function updateFruitsAfterConfirmation() {
+                DRAGGABLE_MODELS.filter(key => !NEW_MODELS.includes(key)).forEach(modelKey => {
+                    const model = models[modelKey];
+                    if (!model || !model.obj) return;
+                    
+                    const atInitialPos = isAtInitialPosition(modelKey);
+                    model.obj.visible = !atInitialPos;
+                    model.visible = !atInitialPos;
+                    model.obj.userData.draggable = false;
+                    model.isConfirmed = true;
+                    
+                    model.obj.traverse(child => {
+                        if (child.isMesh) {
+                            child.userData.draggable = false;
+                        }
+                    });
+                });
+                
+                NEW_MODELS.forEach(modelKey => {
+                    const model = models[modelKey];
+                    if (!model || !model.obj) return;
+                    
+                    model.obj.visible = true;
+                    model.visible = true;
+                    model.obj.userData.draggable = true;
+                    model.isConfirmed = false;
+                    
+                    model.obj.traverse(child => {
+                        if (child.isMesh) {
+                            child.userData.draggable = true;
+                        }
+                    });
+                });
+                
+                tooltip.style.opacity = 1;
+                tooltip.textContent = '模型A、B、C已显示，可点击拖动它们';
+                setTimeout(() => {
+                    tooltip.style.opacity = 0;
+                }, 3000);
+            }
+
+            function finalizeNewModels() {
+                NEW_MODELS.forEach(modelKey => {
+                    const model = models[modelKey];
+                    if (!model || !model.obj) return;
+                    
+                    const atInitialPos = isAtInitialPosition(modelKey);
+                    
+                    model.obj.visible = !atInitialPos;
+                    model.visible = !atInitialPos;
+                    model.obj.userData.draggable = false;
+                    model.isConfirmed = true;
+                    
+                    model.obj.traverse(child => {
+                        if (child.isMesh) {
+                            child.userData.draggable = false;
+                        }
+                    });
+                });
+                
+                tooltip.style.opacity = 1;
+                tooltip.textContent = '已确认最终状态：移动过的模型保留，未移动的模型已隐藏';
+                setTimeout(() => {
+                    tooltip.style.opacity = 0;
+                }, 3000);
+                
+                showExcellent();
+            }
+
+            // 重置当前3D场景状态（不完全重启）
+            function resetCurrentSession() {
+                jianhaoClicked = false;
+                jianhaoConfirmed = false;
+                jianhaoFinalized = false;
+                jianhaoPermanentlyHidden = false;
+                draggedObject = null;
+                isDraggingModel = false;
+                isRotatingView = false;
+                isCameraAnimating = false;
+                
+                if (excellentText) {
+                    excellentText.style.opacity = 0;
+                    excellentText.style.transform = 'translate(-50%, -50%) rotate(-2deg) scale(0.9)';
+                }
+                
+                Object.keys(MODEL_COORDINATES).forEach(key => {
+                    const coords = MODEL_COORDINATES[key];
+                    const model = models[key];
+                    
+                    if (model && model.obj) {
+                        model.obj.position.set(
+                            coords.position.x,
+                            coords.position.y,
+                            coords.position.z
+                        );
+                        
+                        if (coords.rotation) {
+                            model.obj.rotation.set(
+                                coords.rotation.x,
+                                coords.rotation.y,
+                                coords.rotation.z
+                            );
+                        } else {
+                            model.obj.rotation.set(0, 0, 0);
+                        }
+                        
+                        model.obj.visible = coords.visible;
+                        model.visible = coords.visible;
+                        
+                        const isDraggable = coords.draggable || DRAGGABLE_MODELS.includes(key);
+                        model.obj.userData.draggable = isDraggable;
+                        model.isConfirmed = false;
+                        
+                        model.obj.traverse(child => {
+                            if (child.isMesh) {
+                                child.userData.draggable = isDraggable;
+                            }
+                        });
+                    }
+                });
+                
+                spheres.forEach(sphere => {
+                    if (sphere.mesh) {
+                        sphere.mesh.visible = true;
+                    }
+                });
+                
+                if (camera && controls) {
+                    camera.position.set(0, 15, 30);
+                    controls.target.set(0, 1, 0);
+                    controls.reset();
+                    controls.enabled = true;
+                }
+                
+                tooltip.style.opacity = 1;
+                tooltip.textContent = '已重置当前会话';
+                setTimeout(() => {
+                    tooltip.style.opacity = 0;
+                }, 2000);
+            }
+
+            // ------------------------------
+            // 事件处理函数
+            // ------------------------------
+            function onMouseDown(event) {
+                if (isCameraAnimating) return;
+                
+                if (jianhaoPermanentlyHidden) {
+                    const tempClickableObjects = clickableObjects.filter(obj => 
+                        !(obj.userData.isJianhao || obj.userData.type === 'o' || 
+                          (obj.parent && (obj.parent.userData.isJianhao || obj.parent.userData.type === 'o')))
+                    );
+                }
+                
+                event.preventDefault();
+                
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(clickableObjects, true);
+                
+                isDraggingModel = false;
+                isRotatingView = false;
+                draggedObject = null;
+                
+                let clickedResetButton = false;
+                if (intersects.length > 0) {
+                    const obj = intersects[0].object;
+                    clickedResetButton = obj.userData.isResetButton || 
+                                      (obj.parent && obj.parent.userData.isResetButton);
+                    
+                    if (clickedResetButton) {
+                        resetCurrentSession();
+                        return;
+                    }
+                }
+                
+                let clickedJianhao = false;
+                if (!jianhaoPermanentlyHidden && intersects.length > 0) {
+                    const obj = intersects[0].object;
+                    clickedJianhao = obj.userData.isJianhao || 
+                                    (obj.parent && obj.parent.userData.isJianhao);
+                }
+                
+                if (clickedJianhao) {
+                    if (!jianhaoClicked) {
+                        jianhaoClicked = true;
+                        jianhaoConfirmed = false;
+                        jianhaoFinalized = false;
+                        spheres.forEach(sphere => sphere.mesh && (sphere.mesh.visible = false));
+                        
+                        DRAGGABLE_MODELS.forEach(modelKey => {
+                            const isNew = NEW_MODELS.includes(modelKey);
+                            setModelVisibility(modelKey, !isNew);
+                            
+                            if (models[modelKey] && models[modelKey].obj) {
+                                models[modelKey].obj.userData.draggable = !isNew;
+                                models[modelKey].obj.traverse(child => {
+                                    if (child.isMesh) child.userData.draggable = !isNew;
+                                });
+                                models[modelKey].isConfirmed = false;
+                            }
+                        });
+                        
+                        tooltip.style.opacity = 1;
+                        tooltip.textContent = '拖动水果调整位置，再次点击加号确认';
+                        tooltip.style.left = (event.clientX + 10) + 'px';
+                        tooltip.style.top = (event.clientY - 20) + 'px';
+                        return;
+                    } else if (!jianhaoConfirmed) {
+                        jianhaoConfirmed = true;
+                        jianhaoFinalized = false;
+                        updateFruitsAfterConfirmation();
+                        return;
+                    } else if (!jianhaoFinalized) {
+                        jianhaoFinalized = true;
+                        finalizeNewModels();
+                        return;
+                    } else {
+                        jianhaoFinalized = false;
+                        jianhaoConfirmed = false;
+                        
+                        if (models.jianhao && models.jianhao.obj) {
+                            models.jianhao.obj.visible = true;
+                        }
+                        if (models.o && models.o.obj) {
+                            models.o.obj.visible = true;
+                        }
+                        
+                        DRAGGABLE_MODELS.forEach(modelKey => {
+                            setModelVisibility(modelKey, true);
+                            if (models[modelKey] && models[modelKey].obj) {
+                                models[modelKey].obj.userData.draggable = true;
+                                models[modelKey].obj.traverse(child => {
+                                    if (child.isMesh) child.userData.draggable = true;
+                                });
+                                models[modelKey].isConfirmed = false;
+                            }
+                        });
+                        
+                        tooltip.style.opacity = 1;
+                        tooltip.textContent = '可重新调整所有模型位置，再次点击加号确认';
+                        tooltip.style.left = (event.clientX + 10) + 'px';
+                        tooltip.style.top = (event.clientY - 20) + 'px';
+                        return;
+                    }
+                }
+                
+                if (!jianhaoClicked && intersects.length > 0) {
+                    const clickedObject = intersects[0].object;
+                    if (clickedObject.userData.isSphere) {
+                        switch (clickedObject.userData.type) {
+                            case 'showCake':
+                                setModelVisibility('cake', true);
+                                setModelVisibility('zisedangao', false);
+                                setModelVisibility('fensedangao', false);
+                                break;
+                            case 'showFenSe':
+                                setModelVisibility('cake', false);
+                                setModelVisibility('zisedangao', false);
+                                setModelVisibility('fensedangao', true);
+                                break;
+                            case 'showZiSe':
+                                setModelVisibility('cake', false);
+                                setModelVisibility('zisedangao', true);
+                                setModelVisibility('fensedangao', false);
+                                break;
+                        }
+                        return;
+                    }
+                }
+                
+                if (!jianhaoFinalized && intersects.length > 0) {
+                    for (let i = 0; i < intersects.length; i++) {
+                        const intersect = intersects[i];
+                        let targetObject = intersect.object;
+                        
+                        if (targetObject.userData.type === 'o' || 
+                            (targetObject.parent && targetObject.parent.userData.type === 'o')) {
+                            continue;
+                        }
+                        
+                        if (targetObject.userData.draggable || 
+                           (targetObject.parent && targetObject.parent.userData.draggable)) {
+                            
+                            draggedObject = targetObject.userData.parentModel || targetObject;
+                        }
+                        
+                        if (draggedObject) {
+                            isDraggingModel = true;
+                            controls.enabled = false;
+                            
+                            const plane = new THREE.Plane();
+                            plane.setFromNormalAndCoplanarPoint(
+                                camera.getWorldDirection(new THREE.Vector3()),
+                                draggedObject.getWorldPosition(new THREE.Vector3())
+                            );
+                            
+                            const intersectionPoint = new THREE.Vector3();
+                            raycaster.ray.intersectPlane(plane, intersectionPoint);
+                            
+                            dragOffset.copy(draggedObject.getWorldPosition(new THREE.Vector3()))
+                                  .sub(intersectionPoint);
+                            
+                            document.body.style.cursor = 'grabbing';
+                            break;
+                        }
+                    }
+                }
+                
+                if (!draggedObject && !clickedJianhao) {
+                    isRotatingView = true;
+                    controls.enabled = true;
+                    document.body.style.cursor = 'grabbing';
+                }
+            }
+
+            function onMouseMove(event) {
+                if (isCameraAnimating) return;
+                
+                event.preventDefault();
+                
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                
+                if (!jianhaoFinalized && draggedObject && isDraggingModel) {
+                    if (draggedObject.userData.type === 'o' || 
+                        (draggedObject.parent && draggedObject.parent.userData.type === 'o')) {
+                        return;
+                    }
+                    
+                    raycaster.setFromCamera(mouse, camera);
+                    
+                    const plane = new THREE.Plane();
+                    plane.setFromNormalAndCoplanarPoint(
+                        camera.getWorldDirection(new THREE.Vector3()),
+                        draggedObject.getWorldPosition(new THREE.Vector3())
+                    );
+                    
+                    const intersectionPoint = new THREE.Vector3();
+                    raycaster.ray.intersectPlane(plane, intersectionPoint);
+                    
+                    const newPosition = new THREE.Vector3()
+                        .copy(intersectionPoint)
+                        .add(dragOffset);
+                    
+                    if (draggedObject.userData.alwaysDraggable) {
+                        draggedObject.position.copy(newPosition);
+                    } else {
+                        newPosition.y = Math.max(newPosition.y, -1.8);
+                        draggedObject.position.copy(newPosition);
+                    }
+                    return;
+                }
+                
+                if (!jianhaoClicked) {
+                    raycaster.setFromCamera(mouse, camera);
+                    const intersects = raycaster.intersectObjects(clickableObjects, false);
+                    
+                    let hoveredSphere = null;
+                    let tooltipText = '';
+                    
+                    for (let i = 0; i < intersects.length; i++) {
+                        if (intersects[i].object.userData.isSphere) {
+                            for (let j = 0; j < spheres.length; j++) {
+                                if (spheres[j].mesh === intersects[i].object) {
+                                    hoveredSphere = spheres[j];
+                                    tooltipText = spheres[j].tooltip;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    
+                    if (hoveredSphere) {
+                        tooltip.style.opacity = 1;
+                        tooltip.textContent = tooltipText;
+                        tooltip.style.left = (event.clientX + 10) + 'px';
+                        tooltip.style.top = (event.clientY - 20) + 'px';
+                    } else {
+                        tooltip.style.opacity = 0;
+                    }
+                } else if (!jianhaoFinalized) {
+                    raycaster.setFromCamera(mouse, camera);
+                    const intersects = raycaster.intersectObjects(clickableObjects, true);
+                    let isHoveringDraggable = false;
+                    
+                    for (let i = 0; i < intersects.length; i++) {
+                        const obj = intersects[i].object;
+                        if (obj.userData.type === 'o' || (obj.parent && obj.parent.userData.type === 'o')) {
+                            continue;
+                        }
+                        
+                        if (obj.userData.draggable || 
+                           (obj.parent && obj.parent.userData.draggable)) {
+                            isHoveringDraggable = true;
+                            break;
+                        }
+                    }
+                    
+                    if (isHoveringDraggable) {
+                        tooltip.style.opacity = 1;
+                        tooltip.textContent = '点击并拖动调整位置';
+                        tooltip.style.left = (event.clientX + 10) + 'px';
+                        tooltip.style.top = (event.clientY - 20) + 'px';
+                    } else if (!draggedObject) {
+                        tooltip.style.opacity = 0;
+                    }
+                } else {
+                    tooltip.style.opacity = 0;
+                }
+            }
+
+            function onMouseUp() {
+                if (isCameraAnimating) return;
+                
+                if (draggedObject) {
+                    draggedObject = null;
+                    isDraggingModel = false;
+                }
+                
+                isRotatingView = false;
+                controls.enabled = true;
+                document.body.style.cursor = 'default';
+            }
+
+            // ------------------------------
+            // 工具函数
+            // ------------------------------
+            function setModelVisibility(modelKey, visible) {
+                if (modelKey === 'jianhao' && jianhaoPermanentlyHidden) {
+                    if (models.o && models.o.obj) {
+                        models.o.obj.visible = false;
+                    }
+                    return;
+                }
+                
+                if (modelKey === 'o' && models.o.linkToJianhao) {
+                    visible = models.jianhao ? models.jianhao.visible : false;
+                }
+                
+                if (models[modelKey] && models[modelKey].obj) {
+                    models[modelKey].obj.visible = visible;
+                    models[modelKey].visible = visible;
+                    
+                    if (modelKey === 'jianhao' && models.o && models.o.obj && models.o.linkToJianhao) {
+                        models.o.obj.visible = visible;
+                        models.o.visible = visible;
+                    }
+                }
+            }
+
+            function updateProgress(ratio) {
+                const pct = Math.round(ratio * 100);
+                document.getElementById('progress-bar').style.width = pct + '%';
+            }
+
+            function onResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+            // 启动3D初始化
+            init();
+        }
+    </script>
+</body>
+</html>

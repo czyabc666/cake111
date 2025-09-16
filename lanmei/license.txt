@@ -1,0 +1,11 @@
+Model Information:
+* title:	Gourmet Blueberry
+* source:	https://sketchfab.com/3d-models/gourmet-blueberry-62f6c6368c484dd6a85a2a162133d2e0
+* author:	inciprocal (https://sketchfab.com/inciprocal.com)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Gourmet Blueberry" (https://sketchfab.com/3d-models/gourmet-blueberry-62f6c6368c484dd6a85a2a162133d2e0) by inciprocal (https://sketchfab.com/inciprocal.com) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

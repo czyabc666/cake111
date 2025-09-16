@@ -1,0 +1,11 @@
+Model Information:
+* title:	Arrow Round
+* source:	https://sketchfab.com/3d-models/arrow-round-7a996eabafd44e5a96e3ee58c838bfc8
+* author:	aaronjbryant (https://sketchfab.com/aaronjbryant)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Arrow Round" (https://sketchfab.com/3d-models/arrow-round-7a996eabafd44e5a96e3ee58c838bfc8) by aaronjbryant (https://sketchfab.com/aaronjbryant) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
