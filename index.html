@@ -3,29 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Cake模型查看器（带烟花动画）</title>
+    <title>cake蛋糕装饰应用</title>
     <style>
         /* 初始覆盖层样式 */
-#overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: url("images/cake-bg.jpg") no-repeat center center;
-    background-size: cover;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), 
-                visibility 0.8s, 
-                background-position 0.2s ease, 
-                transform 0.2s ease;
-    visibility: visible;
-    opacity: 1;
-}
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.8s cubic-bezier(0.2,0.8,0.2,1), visibility 0.8s;
+            visibility: visible;
+            opacity: 1;
+            background: transparent;
+        }
+
+        /* 三层背景 */
+        .parallax-layer {
+            position: absolute;
+            inset: 0;
+            background-position: center;
+            background-size: cover;
+            will-change: transform;
+            pointer-events: none;
+        }
+        .layer-bg { background-image: url("images/parallax-bg.jpg"); z-index: 1; }
+        .layer-mid { background-image: url("images/parallax-mid.png"); z-index: 2; }
+        .layer-fg { background-image: url("images/parallax-fg.png"); z-index: 3; }
+
+        /* UI 层在最上面 */
+        .overlay-ui {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+        }
 
         /* 重启覆盖层 */
         #restart-overlay {
@@ -34,7 +50,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(135deg, #ffecef 0%, #fff9e6 100%);
+            background: url('images/restart-bg.jpg') no-repeat center center / cover;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -46,59 +62,46 @@
 
         /* 艺术发光标题样式 */
         #fantasy-title {
-    margin-bottom: 2rem;
-    display: inline-block;
-    animation: titlePulse 3s infinite alternate;
-}
+            margin-bottom: 2rem;
+            display: inline-block;
+            animation: titlePulse 3s infinite alternate;
+        }
 
-#fantasy-title img {
-    width: 1000px;
-    height: auto;
-    display: block;
-}
+        #fantasy-title img {
+            width: 1000px;
+            height: auto;
+            display: block;
+        }
 
-      @keyframes titlePulse {
-    0% {
-        transform: scale(0.95);
-    }
-    50% {
-        transform: scale(1.05);
-    }
-    100% {
-        transform: scale(0.95);
-    }
-}  
+        @keyframes titlePulse {
+            0%   { transform: translateX(100px) scale(0.95); }
+            50%  { transform: translateX(100px) scale(1.05); }
+            100% { transform: translateX(100px) scale(0.95); }
+        }
 
         /* Start按钮样式 */
         #overlay {
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-}
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
 
-#start-btn {
-    padding: 0;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    outline: none;
-    animation: bounceGlow 2s infinite ease-in-out;
-    display: inline-block;
-}
+        #start-btn {
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            outline: none;
+            animation: bounceGlow 2s infinite ease-in-out;
+            display: inline-block;
+        }
 
-#start-btn img {
-    display: block;
-    width: 200px !important;
-    height: auto;
-    pointer-events: none;
-} 
-
-#start-btn img {
-    display: block;
-    width: 120px;
-    height: auto;
-    pointer-events: none;
-}
+        #start-btn img {
+            display: block;
+            width: 200px !important;
+            height: auto;
+            pointer-events: none;
+        }
 
         /* Restart按钮样式 */
         #restart-btn {
@@ -138,7 +141,6 @@
         body { 
             margin: 0; 
             overflow: hidden; 
-           
         }
         #container { width: 100%; height: 100vh; }
         #loading { 
@@ -246,45 +248,118 @@
             100% { transform: translateY(110%) rotate(360deg); opacity: 0; }
         }
         #music-btn {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    width: 50px;
-    height: 50px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    z-index: 2000;
-    padding: 0;
-}
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            z-index: 2000;
+            padding: 0;
+        }
 
-#music-btn img {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
+        #music-btn img {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
 
-        
-</style>
+        /* --- 泡泡效果 --- */
+        #bubble-container { position: absolute; inset: 0; pointer-events: none; z-index: 90; overflow: hidden; }
+        .bubble {
+            position: absolute;
+            background-image: url('images/bubble.png');
+            background-size: cover; background-repeat: no-repeat;
+            border-radius: 50%;
+            opacity: 0.95;
+            will-change: transform, opacity;
+            animation: bubbleFloat linear forwards;
+        }
+        @keyframes bubbleFloat {
+            0% { transform: translateY(10vh) scale(1); opacity: 0.95; }
+            100% { transform: translateY(-30vh) scale(1.12); opacity: 0; }
+        }
+        /* DOM 粒子 (excellent 专用) */
+        .particle-dom {
+            position: absolute; width: 28px; height:28px;
+            background-image: url('images/particle.png'); background-size: contain; background-repeat:no-repeat;
+            pointer-events:none; opacity:0.95;
+            will-change: transform, opacity;
+            animation: particleFall 1.2s linear forwards;
+        }
+        @keyframes particleFall {
+            0% { transform: translateY(0) scale(0.9); opacity: 1; }
+            100% { transform: translateY(-160px) scale(1.1); opacity: 0; }
+        }
+
+        /* 动画效果增强 */
+        .glow {
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
+        }
+
+        @keyframes floatAnimation {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        .floating {
+            animation: floatAnimation 3s ease-in-out infinite;
+        }
+
+        @keyframes spinAnimation {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        .spinning {
+            animation: spinAnimation 8s linear infinite;
+        }
+
+        @keyframes colorPulse {
+            0% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(30deg); }
+            100% { filter: hue-rotate(0deg); }
+        }
+
+        .color-pulse {
+            animation: colorPulse 6s ease-in-out infinite;
+        }
+    </style>
 </head>
 <body>
+    
     <!-- 初始覆盖层 -->
     <div id="overlay">
-    <h1 id="fantasy-title">
-        <img src="images/my-title.png" alt="Fantasy Cake" />
-    </h1>
+        <div id="parallax-container">
+            <!-- 三层分层背景 -->
+            <div class="parallax-layer layer-bg"></div>
+            <div class="parallax-layer layer-mid"></div>
+            <div class="parallax-layer layer-fg"></div>
 
-    <button id="start-btn">
-        <img src="images/start-icon.png" alt="Start" />
-    </button>
+            <!-- UI 层 -->
+            <div class="overlay-ui">
+                <h1 id="fantasy-title">
+                    <img src="images/my-title.png" alt="Fantasy Cake" />
+                </h1>
 
-    <!-- 新增音乐按钮 -->
-    <button id="music-btn">
-        <img id="music-icon" src="images/music-on.png" alt="音乐开关">
-    </button>
+                <button id="start-btn">
+                    <img src="images/start-icon.png" alt="Start" />
+                </button>
 
-    <div id="cute-effects"></div>
-</div>
+                <!-- 音乐按钮 -->
+                <button id="music-btn">
+                    <img id="music-icon" src="images/music-on.png" alt="音乐开关" />
+                </button>
+
+                <!-- 可爱特效容器 -->
+                <div id="bubble-container"></div>
+                <div id="cute-effects"></div>
+            </div>
+        </div>
+    </div>
     <!-- 重启覆盖层 -->
     <div id="restart-overlay">
         <button id="restart-btn">Restart</button>
@@ -298,12 +373,12 @@
         <div id="status">小蛋糕准备中...</div>
     </div>
     <!-- BGM 控制按钮（左上角） -->
-<button id="music-btn">
-    <img id="music-icon" src="images/music-on.png" alt="音乐开关">
-</button>
+    <button id="music-btn">
+        <img id="music-icon" src="images/music-on.png" alt="音乐开关">
+    </button>
 
-<!-- 全局 BGM 音频 -->
-<audio id="bgm" src="audio/bgm.mp3" loop></audio>
+    <!-- 全局 BGM 音频 -->
+    <audio id="bgm" src="audio/bgm.mp3" loop></audio>
     <div class="tooltip"></div>
     <div class="dragging提示">拖动装饰物来装饰你的小蛋糕吧~</div>
     <div id="excellent-text">excellent！</div>
@@ -312,16 +387,13 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/DRACOLoader.js"></script>
-    <!-- 新增：加载动画控制器 -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/animation/AnimationMixer.js"></script>
+    
     
     <script>
         // 全局变量
         let scene, camera, renderer, controls;
         let threeJsInitialized = false;
-        // 新增：动画混合器变量
-        let animationMixers = {};
-        let clock = new THREE.Clock();
+        let mixer; // 动画混合器，用于控制yh模型动画
         
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -332,33 +404,39 @@
             const loading = document.getElementById('loading');
             const cuteEffects = document.getElementById('cute-effects');
             
-    // BGM 控制逻辑
-    const musicBtn = document.getElementById('music-btn');
-    const musicIcon = document.getElementById('music-icon');
-    const bgm = document.getElementById('bgm');
-    let isPlaying = false;
+            // BGM 控制逻辑
+            const musicBtn = document.getElementById('music-btn');
+            const musicIcon = document.getElementById('music-icon');
+            const bgm = document.getElementById('bgm');
+            let isPlaying = false;
 
-    musicBtn.addEventListener('click', () => {
-    if (isPlaying) {
-        bgm.pause();
-        isPlaying = false;
-    } else {
-        bgm.play().catch(err => console.log('BGM播放失败', err));
-        isPlaying = true;
-    }
-});
+            musicBtn.addEventListener('click', () => {
+                if (isPlaying) {
+                    bgm.pause();
+                    isPlaying = false;
+                    musicIcon.src = 'images/music-off.png';
+                } else {
+                    bgm.play().catch(err => console.log('BGM播放失败', err));
+                    isPlaying = true;
+                    musicIcon.src = 'images/music-on.png';
+                }
+            });
 
             // 点击 Start 按钮
-startBtn.addEventListener('click', function () {
-    overlay.classList.add('hidden');
-    loading.style.display = 'block';
-    bgm.play().catch(err => console.log('BGM播放失败', err));
+            startBtn.addEventListener('click', function () {
+                overlay.classList.add('hidden');
+                loading.style.display = 'block';
+                // 播放 BGM
+                bgm.play().catch(err => console.log('BGM播放失败', err));
+                isPlaying = true;
+                musicIcon.src = 'images/music-on.png';
 
-    document.body.style.background = "url('images/game-bg.jpg') no-repeat center center / cover";
+                // 游戏背景
+                document.body.style.background = "url('images/game-bg.jpg') no-repeat center center / cover";
 
-    setTimeout(init3DCakeViewer, 500);
-});
-            
+                // 延迟启动 3D
+                setTimeout(init3DCakeViewer, 500);
+            });
 
             // 初始页面背景随鼠标轻微偏移
             document.addEventListener('mousemove', (e) => {
@@ -379,7 +457,7 @@ startBtn.addEventListener('click', function () {
                 particle.classList.add('particle');
                 particle.style.left = Math.random() * 100 + '%';
                 particle.style.fontSize = (12 + Math.random() * 20) + 'px';
-                particle.textContent = Math.random() > 0.5 ? '⭐' : '💖';
+                particle.textContent = Math.random() > 0.5 ? '' : '';
                 cuteEffects.appendChild(particle);
                 const drift = (Math.random() - 0.5) * 30;
                 particle.style.transform = `translateX(${drift}px)`;
@@ -387,16 +465,19 @@ startBtn.addEventListener('click', function () {
                     particle.remove();
                 }, 6200);
             }
+            // 初始页面显示时生成粒子
             let particleInterval = setInterval(() => {
                 const overlayEl = document.getElementById('overlay');
                 if (overlayEl && !overlayEl.classList.contains('hidden')) spawnParticle();
             }, 900);
 
-            
-            // 点击Restart按钮
+            // 点击Restart按钮，恢复到初始状态
             restartBtn.addEventListener('click', function() {
+                // 隐藏重启覆盖层
                 restartOverlay.classList.remove('visible');
                 restartOverlay.classList.add('hidden');
+                
+                // 完全重置页面到初始状态
                 fullResetToInitialState();
             });
         });
@@ -414,8 +495,11 @@ startBtn.addEventListener('click', function () {
                 renderer.domElement.parentElement.removeChild(renderer.domElement);
             }
             
-            // 重置动画混合器
-            animationMixers = {};
+            // 停止并清除动画混合器
+            if (mixer) {
+                mixer.stopAllAction();
+                mixer = null;
+            }
             
             // 重置所有变量
             scene = null;
@@ -443,7 +527,7 @@ startBtn.addEventListener('click', function () {
             if (threeJsInitialized) return;
             threeJsInitialized = true;
             
-            // 所有模型坐标集中配置区（优化yanhua模型配置）
+            // 所有模型坐标集中配置区
             const MODEL_COORDINATES = {
                 cake: { 
                     position: { x: 0, y: -2, z: 0 },
@@ -525,19 +609,16 @@ startBtn.addEventListener('click', function () {
                     rotation: { x: 0, y: 0, z: Math.PI / 6 },
                     alwaysDraggable: true
                 },
-                // 优化yanhua模型配置：增加动画参数
-                yanhua: {
-                    position: { x: 0, y: -5, z: 2 },
-                    scale: 0.5,
-                    visible: false,
-                    initialPos: { x: 0, y: 0, z: 1.5 },
+                yh: { // yh模型配置 - 动画模型
+                    position: { x: 0, y: -3, z: 2 }, // 目标显示位置
+                    scale: 0.5, // 缩放比例
+                    visible: false, // 初始隐藏
+                    initialPos: { x: 0, y: -5, z: 2 },
                     draggable: false,
-                    // 动画相关参数
-                    animation: {
-                        loop: true,      // 是否循环播放
-                        speed: 2.0,      // 播放速度
-                        autoPlay: false  // 不自动播放，等待触发
-                    }
+                    hasAnimation: true, // 标记为有动画的模型
+                    animationSpeed: 2.0, // 动画速度
+                    rotation: { x: 0, y: Math.PI, z: 0 },
+                    loopAnimation: false // 动画是否循环
                 }
             };
             
@@ -690,7 +771,25 @@ startBtn.addEventListener('click', function () {
                 requestAnimationFrame(update);
             }
 
-            // 显示excellent文字和烟花动画
+            // 播放yh模型的动画
+            function playYHAnimation() {
+                if (models.yh && models.yh.animations && models.yh.animations.length > 0 && mixer) {
+                    // 停止之前的所有动画
+                    mixer.stopAllAction();
+                    
+                    // 播放第一个动画剪辑
+                    const action = mixer.clipAction(models.yh.animations[0]);
+                    
+                    // 根据配置设置动画属性
+                    action.setEffectiveTimeScale(MODEL_COORDINATES.yh.animationSpeed);
+                    action.setLoop(MODEL_COORDINATES.yh.loopAnimation ? THREE.LoopRepeat : THREE.LoopOnce);
+                    
+                    // 播放动画
+                    action.play();
+                }
+            }
+
+            // 显示excellent文字和动画yh模型
             function showExcellent() {
                 if (models.jianhao && models.jianhao.obj) {
                     models.jianhao.obj.visible = false;
@@ -700,26 +799,37 @@ startBtn.addEventListener('click', function () {
                 if (models.o && models.o.obj) {
                     models.o.obj.visible = false;
                 }
-
-                // 关键修改：显示并播放yanhua模型动画
-                if (models.yanhua && models.yanhua.obj) {
-                    models.yanhua.obj.visible = true;
-                    models.yanhua.visible = true;
+                
+                // 显示yh模型并播放动画
+                if (models.yh && models.yh.obj) {
+                    models.yh.obj.visible = true;
                     
-                    // 播放烟花动画
-                    if (animationMixers.yanhua) {
-                        // 重置并播放动画
-                        animationMixers.yanhua.stopAllAction();
-                        const animations = models.yanhua.obj.animations;
-                        if (animations && animations.length > 0) {
-                            const action = animationMixers.yanhua.clipAction(animations[0]);
-                            action.setLoop(
-                                MODEL_COORDINATES.yanhua.animation.loop ? 
-                                THREE.LoopRepeat : THREE.LoopOnce
-                            );
-                            action.setEffectiveTimeScale(MODEL_COORDINATES.yanhua.animation.speed);
-                            action.play();
+                    // 为yh模型添加额外的浮动和发光效果
+                    models.yh.obj.traverse(child => {
+                        if (child.isMesh) {
+                            child.material.emissive.set(0xffff00); // 粉色发光
+                            child.material.emissiveIntensity = 0.5;
                         }
+                    });
+                    
+                    // 添加淡入动画
+                    models.yh.obj.scale.set(0, 0, 0);
+                    if (typeof gsap !== 'undefined') {
+                        gsap.to(models.yh.obj.scale, {
+                            x: MODEL_COORDINATES.yh.scale,
+                            y: MODEL_COORDINATES.yh.scale,
+                            z: MODEL_COORDINATES.yh.scale,
+                            duration: 0.8,
+                            ease: 'elastic.out(1, 0.6)',
+                            onComplete: playYHAnimation // 动画完成后播放模型动画
+                        });
+                    } else {
+                        models.yh.obj.scale.set(
+                            MODEL_COORDINATES.yh.scale,
+                            MODEL_COORDINATES.yh.scale,
+                            MODEL_COORDINATES.yh.scale
+                        );
+                        playYHAnimation(); // 播放模型动画
                     }
                 }
                 
@@ -776,12 +886,13 @@ startBtn.addEventListener('click', function () {
                 });
             }
 
-            // 模型加载函数
+            // 模型加载函数 - 特别处理yh动画模型
             function loadAllModels(loader) {
                 Object.keys(MODEL_COORDINATES).forEach(key => {
                     const coords = MODEL_COORDINATES[key];
                     models[key] = { 
                         obj: null, 
+                        animations: [], // 存储动画剪辑
                         loaded: false, 
                         visible: coords.visible,
                         initialPos: coords.initialPos || null,
@@ -789,8 +900,7 @@ startBtn.addEventListener('click', function () {
                         isNewModel: NEW_MODELS.includes(key),
                         draggable: coords.draggable || false,
                         linkToJianhao: coords.linkToJianhao || false,
-                        // 存储动画配置
-                        animation: coords.animation || null
+                        hasAnimation: coords.hasAnimation || false
                     };
                     
                     loadModel(loader, key, `./${key}/scene.gltf`, 
@@ -815,7 +925,7 @@ startBtn.addEventListener('click', function () {
                     a: '模型A',
                     b: '模型B',
                     c: '模型C',
-                    yanhua: '烟花模型'
+                    yh: 'YH动画模型' // yh模型名称
                 };
                 return nameMap[key] || key;
             }
@@ -831,31 +941,18 @@ startBtn.addEventListener('click', function () {
                         model.scale.set(scale, scale, scale);
                         model.visible = visible;
                         
-                        if (rotation) {
-                            model.rotation.set(rotation.x, rotation.y, rotation.z);
+                        // 存储动画剪辑（如果是yh模型）
+                        if (key === 'yh' && gltf.animations && gltf.animations.length > 0) {
+                            models[key].animations = gltf.animations;
+                            
+                            // 初始化动画混合器
+                            if (!mixer) {
+                                mixer = new THREE.AnimationMixer(model);
+                            }
                         }
                         
-                        // 特别处理yanhua模型的动画
-                        if (key === 'yanhua') {
-                            // 创建动画混合器
-                            animationMixers.yanhua = new THREE.AnimationMixer(model);
-                            
-                            // 存储动画数据
-                            model.animations = gltf.animations;
-                            
-                            // 如果设置了自动播放但我们希望手动触发，可以先不播放
-                            if (MODEL_COORDINATES.yanhua.animation.autoPlay) {
-                                if (gltf.animations && gltf.animations.length > 0) {
-                                    const action = animationMixers.yanhua.clipAction(gltf.animations[0]);
-                                    action.setLoop(
-                                        MODEL_COORDINATES.yanhua.animation.loop ? 
-                                        THREE.LoopRepeat : THREE.LoopOnce
-                                    );
-                                    action.setEffectiveTimeScale(MODEL_COORDINATES.yanhua.animation.speed);
-                                    // 先暂停，等待触发
-                                    action.pause();
-                                }
-                            }
+                        if (rotation) {
+                            model.rotation.set(rotation.x, rotation.y, rotation.z);
                         }
                         
                         const coords = MODEL_COORDINATES[key];
@@ -867,11 +964,16 @@ startBtn.addEventListener('click', function () {
                             isJianhao: key === 'jianhao',
                             isResetButton: key === 'o',
                             initialPos: coords.initialPos || null,
-                            linkToJianhao: coords.linkToJianhao || false
+                            linkToJianhao: coords.linkToJianhao || false,
+                            hasAnimation: coords.hasAnimation || false
                         };
                         
-                        // 非烟花模型添加到可点击列表
-                        if (key !== 'yanhua' && (coords.draggable || DRAGGABLE_MODELS.includes(key))) {
+                        // 为yh模型添加额外的视觉效果类
+                        if (key === 'yh') {
+                            model.classList = ['floating', 'color-pulse'];
+                        }
+                        
+                        if (coords.draggable || DRAGGABLE_MODELS.includes(key)) {
                             clickableObjects.push(model);
                             
                             model.traverse(child => {
@@ -901,7 +1003,6 @@ startBtn.addEventListener('click', function () {
                             });
                         }
                         
-                        // 模型材质处理
                         model.traverse(child => {
                             if (child.isMesh) {
                                 child.castShadow = true;
@@ -943,8 +1044,10 @@ startBtn.addEventListener('click', function () {
                                     });
                                 }
                                 else if (key === 'lanmei') {
-                                    child.material = new THREE.MeshLambertMaterial({
+                                    child.material = new THREE.MeshStandardMaterial({
                                         color: 0x0a2463,
+                                        roughness: 0.3,
+                                        metalness: 0.2,
                                         emissive: 0x000033,
                                         emissiveIntensity: 0.3
                                     });
@@ -959,23 +1062,21 @@ startBtn.addEventListener('click', function () {
                                         emissiveIntensity: 0.6
                                     });
                                 }
-                                // 烟花模型材质优化
-                                else if (key === 'yanhua') {
+                                // 为yh模型添加特殊材质效果（粉色）
+                                else if (key === 'yh') {
                                     child.material = new THREE.MeshStandardMaterial({
-                                        color: color || 0xffffff,
-                                        roughness: 0.1,
-                                        metalness: 0.8,
-                                        emissive: color || 0xffff00,
-                                        emissiveIntensity: 0.8,
-                                        transparent: true,
-                                        opacity: 0.9
+                                        color: 0xffb6c1, // 粉色主体
+                                        roughness: 6,
+                                        metalness: 0.1,
+                                        emissive: 0xffb6c1, // 粉色发光
+                                        emissiveIntensity: 0.5
                                     });
                                 }
                                 else if (!child.material || !child.material.map) {
                                     child.material = new THREE.MeshStandardMaterial({
                                         color: 0xaaaaaa,
                                         roughness: 0.7,
-                                        metalness: 0.2
+                                        metalness: 0.1
                                     });
                                 }
                             }
@@ -1001,7 +1102,6 @@ startBtn.addEventListener('click', function () {
                         let geom, geomSize = 1;
                         let geomColor = 0xaaaaaa;
                         
-                        // 模型加载失败时的降级处理
                         if (key === 'o') {
                             geom = new THREE.SphereGeometry(geomSize, 32, 32);
                             geomColor = 0xffff00;
@@ -1021,67 +1121,10 @@ startBtn.addEventListener('click', function () {
                         } else if (key === 'caomei') {
                             geom = new THREE.BoxGeometry(1, 1, 1);
                             geomColor = 0xff3838;
-                        }
-                        else if (key === 'lanmei') {
+                        } else if (key === 'lanmei') {
                             geom = new THREE.BoxGeometry(1, 1, 1);
                             geomColor = 0x2a45ff;
-                            const mat = new THREE.MeshLambertMaterial({
-                                color: geomColor,
-                                emissive: 0x000033,
-                                emissiveIntensity: 0.3,
-                                wireframe: true,
-                                transparent: true,
-                                opacity: 0.8
-                            });
-                            const model = new THREE.Mesh(geom, mat);
-                            
-                            model.userData = {
-                                type: key,
-                                draggable: MODEL_COORDINATES[key].draggable || false,
-                                isFruit: DRAGGABLE_MODELS.includes(key) && !NEW_MODELS.includes(key),
-                                isNewModel: NEW_MODELS.includes(key),
-                                isJianhao: key === 'jianhao',
-                                isResetButton: key === 'o',
-                                initialPos: MODEL_COORDINATES[key].initialPos || null,
-                                linkToJianhao: MODEL_COORDINATES[key].linkToJianhao || false
-                            };
-                            
-                            if (rotation) {
-                                model.rotation.set(rotation.x, rotation.y, rotation.z);
-                            }
-                            
-                            if (MODEL_COORDINATES[key].draggable || DRAGGABLE_MODELS.includes(key)) {
-                                clickableObjects.push(model);
-                                model.traverse(child => {
-                                    if (child.isMesh) {
-                                        child.userData = {
-                                            draggable: MODEL_COORDINATES[key].draggable || false,
-                                            parentModel: model,
-                                            type: key,
-                                            isFruit: DRAGGABLE_MODELS.includes(key) && !NEW_MODELS.includes(key),
-                                            isNewModel: NEW_MODELS.includes(key)
-                                        };
-                                        clickableObjects.push(child);
-                                    }
-                                });
-                            }
-                            
-                            model.position.set(x, y, z);
-                            model.scale.set(scale, scale, scale);
-                            model.visible = visible;
-                            scene.add(model);
-                            
-                            models[key].obj = model;
-                            models[key].loaded = true;
-                            loaded++;
-                            updateProgress(loaded / total);
-                            
-                            if (loaded === total) {
-                                document.getElementById('loading').style.display = 'none';
-                            }
-                            return;
-                        }
-                        else if (key === 'oreo') {
+                        } else if (key === 'oreo') {
                             geom = new THREE.BoxGeometry(1 * 0.3, 1 * 0.3, 1 * 0.3);
                             geomColor = 0x8B4513;
                         } else if (key === 'yingtao') {
@@ -1096,74 +1139,9 @@ startBtn.addEventListener('click', function () {
                         } else if (key === 'c') {
                             geom = new THREE.BoxGeometry(1, 1, 1);
                             geomColor = 0xff33cc;
-                        }
-                        // 烟花模型加载失败时的降级处理
-                        else if (key === 'yanhua') {
-                            // 创建一个简单的粒子系统模拟烟花
-                            const particlesGeometry = new THREE.BufferGeometry();
-                            const particlesCount = 150;
-                            const posArray = new Float32Array(particlesCount * 3);
-                            
-                            for(let i = 0; i < particlesCount * 3; i++) {
-                                posArray[i] = (Math.random() - 0.5) * 10;
-                            }
-                            
-                            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-                            
-                            const particlesMaterial = new THREE.PointsMaterial({
-                                size: 0.1,
-                                color: 0xffff00,
-                                transparent: true,
-                                opacity: 0.8,
-                                blending: THREE.AdditiveBlending
-                            });
-                            
-                            const model = new THREE.Points(particlesGeometry, particlesMaterial);
-                            
-                            // 存储动画配置
-                            model.userData = {
-                                type: key,
-                                draggable: false,
-                                initialPos: MODEL_COORDINATES[key].initialPos || null,
-                                isFallback: true // 标记为降级模型
-                            };
-                            
-                            if (rotation) {
-                                model.rotation.set(rotation.x, rotation.y, rotation.z);
-                            }
-                            
-                            model.position.set(x, y, z);
-                            model.scale.set(scale, scale, scale);
-                            model.visible = visible;
-                            scene.add(model);
-                            
-                            // 为降级模型创建简单的动画
-                            animationMixers.yanhua = {
-                                update: function(delta) {
-                                    model.rotation.y += delta * 0.5;
-                                    const points = model.geometry.attributes.position.array;
-                                    for(let i = 0; i < points.length; i += 3) {
-                                        points[i] += (Math.random() - 0.5) * 0.05;
-                                        points[i + 1] += (Math.random() - 0.5) * 0.05;
-                                        points[i + 2] += (Math.random() - 0.5) * 0.05;
-                                    }
-                                    model.geometry.attributes.position.needsUpdate = true;
-                                },
-                                stopAllAction: function() {},
-                                clipAction: function() {
-                                    return { play: function() {}, pause: function() {} };
-                                }
-                            };
-                            
-                            models[key].obj = model;
-                            models[key].loaded = true;
-                            loaded++;
-                            updateProgress(loaded / total);
-                            
-                            if (loaded === total) {
-                                document.getElementById('loading').style.display = 'none';
-                            }
-                            return;
+                        } else if (key === 'yh') { // yh模型的备用几何体（粉色）
+                            geom = new THREE.BoxGeometry(2, 2, 2);
+                            geomColor = 0xffe4e1; // 粉色备用色
                         }
                         else {
                             geom = new THREE.BoxGeometry(geomSize, geomSize, geomSize);
@@ -1185,7 +1163,8 @@ startBtn.addEventListener('click', function () {
                             isJianhao: key === 'jianhao',
                             isResetButton: key === 'o',
                             initialPos: MODEL_COORDINATES[key].initialPos || null,
-                            linkToJianhao: MODEL_COORDINATES[key].linkToJianhao || false
+                            linkToJianhao: MODEL_COORDINATES[key].linkToJianhao || false,
+                            hasAnimation: MODEL_COORDINATES[key].hasAnimation || false
                         };
                         
                         if (rotation) {
@@ -1342,20 +1321,14 @@ startBtn.addEventListener('click', function () {
                 isRotatingView = false;
                 isCameraAnimating = false;
                 
+                // 停止yh模型动画
+                if (mixer) {
+                    mixer.stopAllAction();
+                }
+                
                 if (excellentText) {
                     excellentText.style.opacity = 0;
                     excellentText.style.transform = 'translate(-50%, -50%) rotate(-2deg) scale(0.9)';
-                }
-
-                // 重置yanhua模型状态
-                if (models.yanhua && models.yanhua.obj) {
-                    models.yanhua.obj.visible = false;
-                    models.yanhua.visible = false;
-                    
-                    // 停止烟花动画
-                    if (animationMixers.yanhua) {
-                        animationMixers.yanhua.stopAllAction();
-                    }
                 }
                 
                 Object.keys(MODEL_COORDINATES).forEach(key => {
@@ -1736,14 +1709,13 @@ startBtn.addEventListener('click', function () {
 
             function animate() {
                 requestAnimationFrame(animate);
-                // 更新所有动画混合器
-                const delta = clock.getDelta();
-                for (const key in animationMixers) {
-                    if (animationMixers.hasOwnProperty(key) && typeof animationMixers[key].update === 'function') {
-                        animationMixers[key].update(delta);
-                    }
-                }
                 controls.update();
+                
+                // 更新动画混合器（如果存在）
+                if (mixer) {
+                    mixer.update(0.016); // 假设60fps
+                }
+                
                 renderer.render(scene, camera);
             }
 
@@ -1751,45 +1723,341 @@ startBtn.addEventListener('click', function () {
             init();
             
         }
-       // 背景随鼠标轻微偏移 + 缩放
-document.addEventListener("mousemove", (e) => {
-    const moveX = (e.clientX / window.innerWidth - 0.5) * 10;
-    const moveY = (e.clientY / window.innerHeight - 0.5) * 10;
-    const scale = 1.02 + Math.abs(moveX) / 200 + Math.abs(moveY) / 200; 
+        // 背景随鼠标轻微偏移 + 缩放
+        document.addEventListener("mousemove", (e) => {
+            const moveX = (e.clientX / window.innerWidth - 0.5) * 10;
+            const moveY = (e.clientY / window.innerHeight - 0.5) * 10;
+            const scale = 1.02 + Math.abs(moveX) / 200 + Math.abs(moveY) / 200; 
 
-    const overlay = document.getElementById("overlay");
-    if (overlay) {
-        overlay.style.backgroundPosition = `${50 + moveX}% ${50 + moveY}%`;
-        overlay.style.transform = `scale(${scale})`;
-    }
-});
+            const overlay = document.getElementById("overlay");
+            if (overlay) {
+                overlay.style.backgroundPosition = `${50 + moveX}% ${50 + moveY}%`;
+                overlay.style.transform = `scale(${scale})`;
+            }
+        });
 
-// 自定义鼠标
-const cursor = document.getElementById('custom-cursor');
-if (cursor) {
-    cursor.style.position = "fixed";
-    cursor.style.width = "40px";
-    cursor.style.height = "40px";
-    cursor.style.pointerEvents = "none";
-    cursor.style.transform = "translate(-50%, -50%)";
-    cursor.style.zIndex = "10000";
-}
+        // 页面大小改变
+        window.addEventListener('resize', () => {
+            if (typeof camera !== 'undefined' && typeof renderer !== 'undefined') {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        });
 
-document.addEventListener('mousemove', e => {
-    if (cursor) {
-        cursor.style.left = e.clientX + 'px';
-        cursor.style.top = e.clientY + 'px';
-    }
-});
+        // Bubble & Excellent Particles Enhancements
+        (function(){
+            const overlay = document.getElementById('overlay');
+            const bubbleContainer = document.getElementById('bubble-container');
+            const excellentText = document.getElementById('excellent-text');
+            const restartOverlay = document.getElementById('restart-overlay');
+            let bubbleInterval = null;
 
-// 页面大小改变
-window.addEventListener('resize', () => {
-    if (typeof camera !== 'undefined' && typeof renderer !== 'undefined') {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-});
-</script>
+            function spawnBubble(){
+                if (!overlay || overlay.classList.contains('hidden')) return;
+                const b = document.createElement('div');
+                b.className = 'bubble';
+                const size = Math.round(30 + Math.random() * 50);
+                b.style.width = size + 'px';
+                b.style.height = size + 'px';
+                b.style.left = (8 + Math.random() * 84) + '%';
+                b.style.top = (60 + Math.random() * 30) + '%';
+                const dur = (6 + Math.random() * 6).toFixed(2);
+                b.style.animationDuration = dur + 's';
+                bubbleContainer.appendChild(b);
+                setTimeout(()=> b.remove(), (parseFloat(dur)+0.6)*1000);
+            }
+            function startBubbleSpawn(){
+                if (bubbleInterval) return;
+                bubbleInterval = setInterval(()=>{
+                    if (overlay && !overlay.classList.contains('hidden')) spawnBubble();
+                }, 800);
+            }
+            function stopBubbleSpawn(){
+                if (bubbleInterval){ clearInterval(bubbleInterval); bubbleInterval=null; }
+            }
+
+            // Excellent 粒子
+            function spawnDomParticleAt(el){
+                const rect = el.getBoundingClientRect();
+                const p = document.createElement('div');
+                p.className = 'particle-dom';
+                const offsetX = (Math.random() - 0.5) * 120;
+                const offsetY = (Math.random() - 0.5) * 40;
+                p.style.left = (rect.left + rect.width/2 + offsetX) + 'px';
+                p.style.top = (rect.top + rect.height/2 + offsetY) + 'px';
+                p.style.width = (14 + Math.random()*26) + 'px';
+                p.style.height = p.style.width;
+                document.body.appendChild(p);
+                setTimeout(()=> p.remove(), 1200);
+            }
+            function spawnExcellentParticles(){
+                if (!excellentText) return;
+                for (let i=0;i<26;i++){
+                    setTimeout(()=> spawnDomParticleAt(excellentText), i*30);
+                }
+            }
+
+            // 替换原 showExcellent
+            if (typeof showExcellent === 'function'){
+                const _orig = showExcellent;
+                showExcellent = function(){
+                    _orig();
+                    spawnExcellentParticles();
+                };
+            }
+
+            // 页面一开始启动泡泡
+            startBubbleSpawn();
+        })();
+
+        // 视差滚动效果
+        document.addEventListener("mousemove", (e) => {
+            const moveX = (e.clientX / window.innerWidth - 0.5);
+            const moveY = (e.clientY / window.innerHeight - 0.5);
+
+            const bg = document.querySelector(".layer-bg");
+            const mid = document.querySelector(".layer-mid");
+            const fg = document.querySelector(".layer-fg");
+
+            if (bg) bg.style.transform = `translate(${moveX * 10}px, ${moveY * 10}px)`;
+            if (mid) mid.style.transform = `translate(${moveX * 20}px, ${moveY * 20}px)`;
+            if (fg) fg.style.transform = `translate(${moveX * 40}px, ${moveY * 40}px)`;
+        });
+    </script>
+
+    <!-- 增强效果 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+    // 增强脚本
+    (function(){
+        function whenReady(cb){
+            const start = performance.now();
+            (function poll(){
+                if (typeof scene !== 'undefined' && typeof camera !== 'undefined' && typeof renderer !== 'undefined') {
+                    try { cb(); } catch(e){ console.error('enhance cb failed', e); }
+                } else if (performance.now() - start < 8000) {
+                    requestAnimationFrame(poll);
+                } else {
+                    console.warn('enhance: three core objects not found in time; initialization aborted.');
+                }
+            })();
+        }
+
+        whenReady(function(){
+            // 后期处理
+            let composer, renderPass, bloomPass;
+            function initComposer(){
+                try {
+                    renderPass = new THREE.RenderPass(scene, camera);
+                    bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.9, 0.6, 0.2);
+                    composer = new THREE.EffectComposer(renderer);
+                    composer.addPass(renderPass);
+                    composer.addPass(bloomPass);
+                    window._enh_composer = composer;
+                    window._enh_bloomPass = bloomPass;
+                } catch (e) {
+                    console.warn('initComposer failed', e);
+                }
+            }
+            initComposer();
+
+            // 发光效果
+            function setObjectBloom(obj, enable=true){
+                if (!obj) return;
+                obj.traverse(c => {
+                    if (c.isMesh) {
+                        if (enable) c.layers.enable(1);
+                        else c.layers.disable(1);
+                    }
+                });
+            }
+            window.setObjectBloom = setObjectBloom;
+
+            // 粒子效果
+            const particlePool = { points: null, positions: null, velocities: null, count: 0, max: 300 };
+            function makeCircleTexture(color){
+                const size = 64;
+                const cvs = document.createElement('canvas');
+                cvs.width = cvs.height = size;
+                const ctx = cvs.getContext('2d');
+                ctx.clearRect(0,0,size,size);
+                const g = ctx.createRadialGradient(size/2, size/2, 1, size/2, size/2, size/2);
+                g.addColorStop(0, color);
+                g.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(size/2, size/2, size/2, 0, Math.PI*2);
+                ctx.fill();
+                const tex = new THREE.CanvasTexture(cvs);
+                tex.needsUpdate = true;
+                return tex;
+            }
+
+            function initParticlePool(){
+                if (!scene) return;
+                const max = particlePool.max;
+                const geom = new THREE.BufferGeometry();
+                const positions = new Float32Array(max * 3);
+                const velocities = new Float32Array(max * 3);
+                geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const mat = new THREE.PointsMaterial({
+                    size: 0.35 * (window.devicePixelRatio || 1),
+                    map: makeCircleTexture('rgba(255,150,200,0.95)'),
+                    transparent: true,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                });
+                const points = new THREE.Points(geom, mat);
+                points.frustumCulled = false;
+                points.renderOrder = 9999;
+                scene.add(points);
+                particlePool.points = points;
+                particlePool.positions = positions;
+                particlePool.velocities = velocities;
+                particlePool.count = 0;
+            }
+            initParticlePool();
+
+            function spawnParticlesAtWorld(pos, opts){
+                if (!particlePool.points) return;
+                opts = Object.assign({ count: 18, spread: 0.8 }, opts || {});
+                const available = particlePool.max - particlePool.count;
+                const c = Math.min(opts.count, available);
+                if (c <= 0) return;
+                const base = particlePool.count;
+                for (let i=0;i<c;i++){
+                    const idx = base + i;
+                    const px = pos.x + (Math.random()-0.5) * opts.spread;
+                    const py = pos.y + (Math.random()*0.8);
+                    const pz = pos.z + (Math.random()-0.5) * opts.spread;
+                    particlePool.positions[3*idx] = px;
+                    particlePool.positions[3*idx+1] = py;
+                    particlePool.positions[3*idx+2] = pz;
+                    particlePool.velocities[3*idx] = (Math.random()-0.5) * 0.12;
+                    particlePool.velocities[3*idx+1] = 0.15 + Math.random()*0.25;
+                    particlePool.velocities[3*idx+2] = (Math.random()-0.5) * 0.12;
+                }
+                particlePool.count += c;
+                particlePool.points.geometry.setDrawRange(0, particlePool.count);
+                particlePool.points.geometry.attributes.position.needsUpdate = true;
+                setTimeout(() => {
+                    particlePool.count = Math.max(0, particlePool.count - Math.floor(c/1.2));
+                }, 900);
+            }
+            window._spawnParticlesAtWorld = spawnParticlesAtWorld;
+
+            // 动画增强
+            const originalAnimateRef = window.animate || function(){ requestAnimationFrame(arguments.callee); };
+            function animateEnhancer(){
+                requestAnimationFrame(animateEnhancer);
+                try {
+                    // 更新粒子
+                    if (particlePool.points && particlePool.count > 0){
+                        for (let i=0;i<particlePool.count;i++){
+                            particlePool.positions[3*i] += particlePool.velocities[3*i];
+                            particlePool.positions[3*i+1] += particlePool.velocities[3*i+1];
+                            particlePool.positions[3*i+2] += particlePool.velocities[3*i+2];
+                            particlePool.velocities[3*i+1] -= 0.007;
+                        }
+                        particlePool.points.geometry.attributes.position.needsUpdate = true;
+                    }
+                } catch(e){ console.warn('animateEnhancer error', e); }
+                // 渲染
+                try {
+                    if (window._enh_composer && window._enh_bloomPass){
+                        camera.layers.set(1);
+                        renderer.autoClear = true;
+                        window._enh_composer.render();
+
+                        camera.layers.set(0);
+                        renderer.render(scene, camera);
+                    } else {
+                        renderer.render(scene, camera);
+                    }
+                } catch(e){ console.warn('enhanced render error', e); }
+            }
+            animateEnhancer();
+
+            // 相机移动
+            function gsapMoveCameraTo(x,y,z, dur, cb){
+                if (typeof gsap === 'undefined') {
+                    camera.position.set(x,y,z);
+                    if (cb) cb();
+                    return;
+                }
+                gsap.to(camera.position, {
+                    x:x, y:y, z:z, duration: dur || 1.2, ease: 'power2.inOut',
+                    onUpdate: function(){ camera.lookAt(0,1,0); },
+                    onComplete: cb
+                });
+            }
+            window._enh_gsapMoveCameraTo = gsapMoveCameraTo;
+
+            function onFinalizeMagic(){
+                try {
+                    if (models && models.cake && models.cake.obj){
+                        const c = models.cake.obj;
+                        if (typeof gsap !== 'undefined'){
+                            gsap.fromTo(c.scale, {x:0.86,y:0.86,z:0.86}, {x:1.02,y:1.02,z:1.02, duration:0.65, ease:'elastic.out(1,0.6)'});
+                        } else {
+                            c.scale.set(1.02,1.02,1.02);
+                            setTimeout(()=>c.scale.set(1,1,1), 650);
+                        }
+                        setObjectBloom(c, true);
+                        setTimeout(()=> setObjectBloom(c, false), 900);
+                        const wp = new THREE.Vector3();
+                        c.getWorldPosition(wp);
+                        spawnParticlesAtWorld(wp, { count: 36, spread: 1.4 });
+                        gsapMoveCameraTo(0, 11, 18, 1.1, ()=> gsapMoveCameraTo(0,15,30,1.0));
+                    }
+                } catch(e){ console.warn('onFinalizeMagic failed', e); }
+            }
+            if (typeof finalizeNewModels === 'function'){
+                const _orig = finalizeNewModels;
+                finalizeNewModels = function(){
+                    _orig();
+                    try { onFinalizeMagic(); } catch(e){ console.warn(e); }
+                };
+            } else {
+                window.finalizeNewModels = onFinalizeMagic;
+            }
+
+            // 拖动结束效果
+            const _origMouseUp = window.onMouseUp || null;
+            window.onMouseUp = function(){
+                try {
+                    if (typeof draggedObject !== 'undefined' && draggedObject){
+                        try {
+                            const wp = new THREE.Vector3();
+                            draggedObject.getWorldPosition(wp);
+                            spawnParticlesAtWorld(wp, { count: 12, spread: 0.6 });
+                            setObjectBloom(draggedObject, true);
+                            setTimeout(()=> setObjectBloom(draggedObject, false), 700);
+                        } catch(e){}
+                    }
+                } catch(e){ console.warn(e); }
+                if (typeof _origMouseUp === 'function') _origMouseUp();
+            };
+
+            // 响应式处理
+            window.addEventListener('resize', function(){
+                try {
+                    if (window._enh_composer){
+                        window._enh_composer.setSize(window.innerWidth, window.innerHeight);
+                    }
+                } catch(e){}
+            });
+
+            console.log('Enhancer initialized: bloom, particles, GSAP hooks');
+        });
+    })();
+    </script>
 </body>
 </html>
+
